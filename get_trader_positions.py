@@ -1,12 +1,10 @@
 import time
 import requests
-import asyncio
 from telegram import Bot
 
 # Telegram Bot Token and Chat ID
 BOT_TOKEN = "7814985675:AAG513pk7gWR01VFFeJL4JidKbtgQEV4YhI"
 CHAT_ID = 6458736937  # Replace with your actual chat ID
-
 
 # Define the API endpoint and headers
 url = "https://binance-futures-leaderboard1.p.rapidapi.com/v2/getTraderPositions"
@@ -22,48 +20,55 @@ params = {
 # Store the last state of positions
 last_positions = {}
 
-async def fetch_and_notify():
+def fetch_and_notify():
+    """
+    Fetches trader positions and sends Telegram notifications for new/updated positions.
+    """
     global last_positions
-    response = requests.get(url, headers=headers, params=params)
+    try:
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code == 200:
+            data = response.json()
+            if data['success']:
+                positions = data['data'][0]['positions']['perpetual']
+                for position in positions:
+                    symbol = position['symbol']
+                    update_time = position['updateTimeStamp']
 
-    if response.status_code == 200:
-        data = response.json()
-        if data['success']:
-            positions = data['data'][0]['positions']['perpetual']
-            for position in positions:
-                symbol = position['symbol']
-                update_time = position['updateTimeStamp']
-                
-                # Check if this symbol has new or updated data
-                if symbol not in last_positions or last_positions[symbol] != update_time:
-                    # Format a message
-                    message = (
-                        f"🚨 Trade Update for {symbol}:\n"
-                        f"  Entry Price: {position['entryPrice']}\n"
-                        f"  Mark Price: {position['markPrice']}\n"
-                        f"  PnL: {position['pnl']}\n"
-                        f"  ROE: {position['roe']}\n"
-                        f"  Amount: {position['amount']}\n"
-                        f"  Leverage: {position['leverage']}\n"
-                        f"  Long: {position['long']}\n"
-                        f"  Short: {position['short']}\n"
-                    )
-                    # Send the message via Telegram
-                    bot = Bot(token=BOT_TOKEN)
-                    await bot.send_message(chat_id=CHAT_ID, text=message)
+                    # Check if this symbol has new or updated data
+                    if symbol not in last_positions or last_positions[symbol] != update_time:
+                        # Format a message
+                        message = (
+                            f"🚨 Trade Update for {symbol}:\n"
+                            f"  Entry Price: {position['entryPrice']}\n"
+                            f"  Mark Price: {position['markPrice']}\n"
+                            f"  PnL: {position['pnl']}\n"
+                            f"  ROE: {position['roe']}\n"
+                            f"  Amount: {position['amount']}\n"
+                            f"  Leverage: {position['leverage']}\n"
+                            f"  Long: {position['long']}\n"
+                            f"  Short: {position['short']}\n"
+                        )
+                        # Send the message via Telegram (synchronously)
+                        bot = Bot(token=BOT_TOKEN)
+                        bot.send_message(chat_id=CHAT_ID, text=message)
 
-                    # Update the last position for this symbol
-                    last_positions[symbol] = update_time
+                        # Update the last position for this symbol
+                        last_positions[symbol] = update_time
+            else:
+                print("No positions found or data is unavailable.")
         else:
-            print("No positions found or data is unavailable.")
-    else:
-        print(f"Error: {response.status_code}, {response.text}")
+            print(f"Error: {response.status_code}, {response.text}")
+    except Exception as e:
+        print(f"Error in fetch_and_notify: {e}")
 
-async def main():
+def main():
+    """
+    Main function to run the fetch and notify loop.
+    """
     while True:
-        await fetch_and_notify()
-        await asyncio.sleep(300)  # Wait 5 minutes before fetching again
+        fetch_and_notify()
+        time.sleep(300)  # Wait 5 minutes before fetching again
 
-# Run the main loop
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
