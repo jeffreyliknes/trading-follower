@@ -9,7 +9,7 @@ CHAT_ID = 6458736937  # Replace with your actual chat ID
 # API Endpoint and Headers
 url = "https://binance-futures-leaderboard1.p.rapidapi.com/v2/getTraderPositions"
 headers = {
-    "X-RapidAPI-Key": "889bb72fc8mshcde845fdddbc383p18eebcjsnd2997055ac07",
+    "X-RapidAPI-Key": "3b165f4f65mshf704118488ccc4p1b2b96jsnb0b9cc0930c7",  # Updated API token
     "X-RapidAPI-Host": "binance-futures-leaderboard1.p.rapidapi.com"
 }
 

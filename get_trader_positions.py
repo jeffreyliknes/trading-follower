@@ -49,7 +49,7 @@ def fetch_and_notify():
                             f"  Long: {position['long']}\n"
                             f"  Short: {position['short']}\n"
                         )
-                        # Send the message via Telegram (synchronously)
+                        # Send the message via Telegram
                         bot = Bot(token=BOT_TOKEN)
                         bot.send_message(chat_id=CHAT_ID, text=message)
 
