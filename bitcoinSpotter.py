@@ -3,7 +3,6 @@ import pandas as pd
 import pandas_ta as ta
 from telegram import Bot
 import time
-from datetime import datetime
 
 # Telegram Bot Token and Chat ID
 BOT_TOKEN = "7814985675:AAG513pk7gWR01VFFeJL4JidKbtgQEV4YhI"
@@ -93,26 +92,19 @@ def generate_trade_signal(df):
             return "🔻 SELL Signal (Volatility + MACD + Fibonacci + Bollinger) 🚫"
     return "No trade signal"
 
-# Time-based control for active market hours
-def is_active_market_hour():
-    current_hour = datetime.utcnow().hour
-    return (2 <= current_hour <= 8) or (13 <= current_hour <= 20)  # Asia and U.S. sessions
-
-# Main loop to run the strategy
+# Main loop to run the strategy (no time restrictions)
 def main():
     while True:
-        if is_active_market_hour():
-            df = get_price_data()
-            if df is not None:
-                df = calculate_indicators(df)
-                signal = generate_trade_signal(df)
-                if signal != "No trade signal":
-                    send_to_telegram(f"Trade Signal for {symbol}: {signal}")
-            else:
-                send_to_telegram("Error fetching data. Please check API connection.")
+        df = get_price_data()
+        if df is not None:
+            df = calculate_indicators(df)
+            signal = generate_trade_signal(df)
+            if signal != "No trade signal":
+                send_to_telegram(f"Trade Signal for {symbol}: {signal}")
         else:
-            print("Outside trading hours. Pausing bot...")
-        time.sleep(300)  # Check every 5 minutes
+            send_to_telegram("Error fetching data. Please check API connection.")
+        
+        time.sleep(60)  # Check every 60 seconds during testing
 
 # Run the script
 if __name__ == "__main__":
