@@ -9,7 +9,7 @@ CHAT_ID = 6458736937  # Replace with your actual chat ID
 # API Endpoint and Headers
 url = "https://binance-futures-leaderboard1.p.rapidapi.com/v2/getTraderPositions"
 headers = {
-    "X-RapidAPI-Key": "3b165f4f65mshf704118488ccc4p1b2b96jsnb0b9cc0930c7",  # Updated API token
+    "X-RapidAPI-Key": "3b165f4f65mshfb704118488ccc4p1b2b96jsnb0b9cc0930c7",  # Updated API key
     "X-RapidAPI-Host": "binance-futures-leaderboard1.p.rapidapi.com"
 }
 
@@ -22,11 +22,18 @@ def fetch_positions(trader_id):
     params = {"encryptedUid": trader_id, "tradeType": "ALL"}
     try:
         response = requests.get(url, headers=headers, params=params)
+        print(f"Status Code: {response.status_code}")  # Check for 401, 403, or 429 errors
+        print("Response Text:", response.text)  # Print entire response for debugging
         if response.status_code == 200:
             data = response.json()
             if data.get("success") and "data" in data:
                 return data["data"][0]["positions"]["perpetual"]
-        print(f"Error fetching positions for trader {trader_id}: {response.text}")
+        elif response.status_code == 429:
+            print("Too many requests. Consider adding a delay.")
+        elif response.status_code in [401, 403]:
+            print("Not authorized. Check your subscription or API key.")
+        else:
+            print(f"Error fetching positions for trader {trader_id}: {response.text}")
     except Exception as e:
         print(f"Exception fetching positions for trader {trader_id}: {e}")
     return []

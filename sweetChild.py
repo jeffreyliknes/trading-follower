@@ -1,5 +1,5 @@
+import http.client
 import json
-import requests
 from telegram import Bot
 import time
 
@@ -7,12 +7,9 @@ import time
 BOT_TOKEN = "7814985675:AAG513pk7gWR01VFFeJL4JidKbtgQEV4YhI"
 CHAT_ID = 6458736937  # Replace with your actual chat ID
 
-# API Endpoint and Headers
-url = "https://binance-futures-leaderboard1.p.rapidapi.com/v2/getTraderPositions"
-headers = {
-    "X-RapidAPI-Key": "3b165f4f65mshf704118488ccc4p1b2b96jsnb0b9cc0930c7",  # Updated API token
-    "X-RapidAPI-Host": "binance-futures-leaderboard1.p.rapidapi.com"
-}
+# API Configuration
+API_HOST = "binance-futures-leaderboard1.p.rapidapi.com"
+API_KEY = "3b165f4f65mshfb704118488ccc4p1b2b96jsnb0b9cc0930c7"
 
 # Trader ID to monitor
 TRADER_ID = "62C1878E2A5CB866C10640E7B9FED97C"
@@ -20,18 +17,31 @@ TRADER_ID = "62C1878E2A5CB866C10640E7B9FED97C"
 # Track the trader's open positions
 previous_positions = {}
 
-# Fetch Positions for Trader
+# Fetch Positions for Trader (tradeType=ALL)
 def fetch_positions(trader_id):
-    params = {"encryptedUid": trader_id, "tradeType": "ALL"}
+    conn = http.client.HTTPSConnection(API_HOST)
+    headers = {
+        "x-rapidapi-key": API_KEY,
+        "x-rapidapi-host": API_HOST
+    }
+    # Corrected endpoint with encryptedUid
+    endpoint = f"/v2/getTraderPositions?tradeType=ALL&encryptedUid={trader_id}"
+
     try:
-        response = requests.get(url, headers=headers, params=params)
-        if response.status_code == 200:
-            data = response.json()
-            if data.get("success") and "data" in data:
-                return data["data"][0]["positions"]["perpetual"]
-        print(f"Error fetching positions for trader {trader_id}: {response.text}")
+        conn.request("GET", endpoint, headers=headers)
+        res = conn.getresponse()
+        data = res.read()
+        response = json.loads(data.decode("utf-8"))
+
+        print("Full API Response:")
+        print(json.dumps(response, indent=4))
+
+        if response.get("success") and "data" in response:
+            return response["data"][0]["positions"]["perpetual"]  # Corrected path to get perpetual contracts
+        else:
+            print(f"Error: {response.get('message', 'Unknown error')}")
     except Exception as e:
-        print(f"Exception fetching positions for trader {trader_id}: {e}")
+        print(f"Exception fetching positions: {e}")
     return []
 
 # Send Message to Telegram
@@ -45,7 +55,7 @@ def send_to_telegram(message):
 # Monitor Trades
 def monitor_trades():
     global previous_positions
-    
+
     positions = fetch_positions(TRADER_ID)
     if not positions:
         print("No positions found.")
@@ -76,7 +86,7 @@ def main():
     print("Monitoring trades...")
     while True:
         monitor_trades()
-        time.sleep(60)  # Check every minute
+        time.sleep(600)  # Check every minute
 
 # Run the Script
 if __name__ == "__main__":
